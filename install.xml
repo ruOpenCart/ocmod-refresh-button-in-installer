@@ -2,7 +2,7 @@
 <modification>
   <name>[OCN] Refresh Button in Installer</name>
   <code>ocn__refresh_button_in_installer</code>
-  <version>3.0.0.1</version>
+  <version>3.0.1.0</version>
   <author>Hkr</author>
   <link>https://forum.opencart.name/resources/25/</link>
   <date>07.06.2020</date>
@@ -25,12 +25,24 @@
     
   <file path="admin/controller/marketplace/modification.php">
     <operation>
+      <search><![CDATA[$this->getList();]]></search>
+      <add position="replace" trim="true"><![CDATA[
+        // ocn__refresh_button_in_installer
+        if (!isset($this->request->get['installer'])) {
+          $this->getList();
+        }
+        // ocn__refresh_button_in_installer
+      ]]></add>
+    </operation>
+    <operation>
       <search><![CDATA[$this->response->redirect($this->url->link(!empty($data['redirect']) ? $data['redirect'] : 'marketplace/modification', 'user_token=' . $this->session->data['user_token'] . $url, true));]]></search>
       <add position="replace" trim="true"><![CDATA[
         // ocn__refresh_button_in_installer
         if (isset($this->request->get['installer']) && $this->request->get['installer'] === 'on') {
-          // redirect from insrtaller to installer
-          $this->response->redirect($this->url->link(!empty($data['redirect']) ? $data['redirect'] : 'marketplace/installer', 'user_token=' . $this->session->data['user_token'] . $url, true));
+          // non redirect
+          unset($this->session->data['success']);
+          $this->response->addHeader('Content-Type: application/json; charset=utf-8');
+          $this->response->setOutput(json_encode(['success' => $this->language->get('text_success')]));
         } else {
           // original redirect
           $this->response->redirect($this->url->link(!empty($data['redirect']) ? $data['redirect'] : 'marketplace/modification', 'user_token=' . $this->session->data['user_token'] . $url, true));
@@ -46,7 +58,7 @@
       <add position="replace" trim="true"><![CDATA[
         {# ocn__refresh_button_in_installer #}
         <div class="pull-right">
-          <a href="{{ refresh }}" data-toggle="tooltip" title="{{ button_refresh }}" class="btn btn-info"><i class="fa fa-refresh"></i></a>
+          <button data-toggle="tooltip" title="{{ button_refresh }}" class="btn btn-info" id="refreshAjax" data-url="{{ refresh }}"><i class="fa fa-refresh"></i></button>
         </div>
         {# ocn__refresh_button_in_installer #}
       ]]></add>
@@ -63,5 +75,43 @@
         {# ocn__refresh_button_in_installer #}
       ]]></add>
     </operation>
+    <operation>
+      <search trim="true"><![CDATA[{{ footer }}]]></search>
+      <add position="before" trim="true"><![CDATA[
+        {# ocn__refresh_button_in_installer #}
+        <script>
+          $('#refreshAjax').on('click', function () {
+            $('.alert').remove();
+
+            let buttonRefreshAjax = $('#refreshAjax');
+            const urlAjax = buttonRefreshAjax.attr('data-url');
+
+            $.ajax({
+              type: 'get',
+              url: urlAjax,
+              dataType: 'json',
+              beforeSend: function() {
+                buttonRefreshAjax.prop('disabled', true);
+                buttonRefreshAjax.find('i.fa').removeClass('fa-refresh').addClass('fa-spinner fa-pulse');
+              },
+              complete: function() {
+                buttonRefreshAjax.prop('disabled', false);
+                buttonRefreshAjax.find('i.fa').removeClass('fa-spinner fa-pulse').addClass('fa-refresh');
+              },
+              success: function(response) {
+                let alertMessage = response.success;
+
+                let alertBlock = '<div class="alert alert-success alert-dismissible"><i class="fa fa-exclamation-circle"></i>' + alertMessage + '<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                $('#content > .container-fluid').prepend(alertBlock);
+              },
+              error: function(xhr, ajaxOptions, thrownError) {
+                  alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+              }
+            });
+          })
+        </script>
+      {# ocn__refresh_button_in_installer #}
+      ]]></add>
+  </operation>
   </file>
 </modification>
