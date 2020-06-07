@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+  <name>[OCN] Refresh Button in Installer</name>
+  <code>ocn__refresh_button_in_installer</code>
+  <version>3.0.0.1</version>
+  <author>Hkr</author>
+  <link>https://forum.opencart.name/resources/25/</link>
+  <date>07.06.2020</date>
+
+  <file path="admin/controller/marketplace/installer.php">
+    <operation>
+      <search><![CDATA[$data['user_token'] = $this->session->data['user_token'];]]></search>
+      <add position="before" trim="true"><![CDATA[
+        // ocn__refresh_button_in_installer
+        $url = '&installer=on';
+        $data['refresh'] = $this->url->link('marketplace/modification/refresh', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        if (isset($this->session->data['success'])) {
+          $data['success'] = $this->session->data['success'];
+          unset($this->session->data['success']);
+        }
+        // ocn__refresh_button_in_installer
+      ]]></add>
+    </operation>
+  </file>
+    
+  <file path="admin/controller/marketplace/modification.php">
+    <operation>
+      <search><![CDATA[$this->response->redirect($this->url->link(!empty($data['redirect']) ? $data['redirect'] : 'marketplace/modification', 'user_token=' . $this->session->data['user_token'] . $url, true));]]></search>
+      <add position="replace" trim="true"><![CDATA[
+        // ocn__refresh_button_in_installer
+        if (isset($this->request->get['installer']) && $this->request->get['installer'] === 'on') {
+          // redirect from insrtaller to installer
+          $this->response->redirect($this->url->link(!empty($data['redirect']) ? $data['redirect'] : 'marketplace/installer', 'user_token=' . $this->session->data['user_token'] . $url, true));
+        } else {
+          // original redirect
+          $this->response->redirect($this->url->link(!empty($data['redirect']) ? $data['redirect'] : 'marketplace/modification', 'user_token=' . $this->session->data['user_token'] . $url, true));
+        }
+        // ocn__refresh_button_in_installer
+      ]]></add>
+    </operation>
+  </file>
+        
+  <file path="admin/view/template/marketplace/installer.twig">
+    <operation>
+      <search><![CDATA[<h1>{{ heading_title }}</h1>]]></search>
+      <add position="replace" trim="true"><![CDATA[
+        {# ocn__refresh_button_in_installer #}
+        <div class="pull-right">
+          <a href="{{ refresh }}" data-toggle="tooltip" title="{{ button_refresh }}" class="btn btn-info"><i class="fa fa-refresh"></i></a>
+        </div>
+        {# ocn__refresh_button_in_installer #}
+      ]]></add>
+    </operation>
+    <operation>
+      <search><![CDATA[<div class="panel panel-default">]]></search>
+      <add position="before" trim="true"><![CDATA[
+        {# ocn__refresh_button_in_installer #}
+        {% if success %}
+          <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        {% endif %}
+        {# ocn__refresh_button_in_installer #}
+      ]]></add>
+    </operation>
+  </file>
+</modification>
